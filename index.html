@@ -351,7 +351,7 @@ td.heat { position: relative; }
 .sheet-head h3 { margin: 0; font-size: 17px; }
 .sheet-body { padding: 8px 22px 22px; overflow-y: auto; }
 .form-foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
-.toast { position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%) translateY(16px); background: var(--ink); color: var(--page); padding: 10px 18px; border-radius: 12px; opacity: 0; transition: .25s; pointer-events: none; z-index: 60; font-weight: 600; font-size: 13px; }
+.toast { position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%) translateY(16px); background: var(--ink); color: var(--page); padding: 10px 18px; border-radius: 999px; max-width: calc(100vw - 48px); width: max-content; text-align: center; opacity: 0; transition: .25s; pointer-events: none; z-index: 60; font-weight: 600; font-size: 13px; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .loading { padding: 90px; text-align: center; color: var(--muted); }
 .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--grid); border-top-color: var(--ink); border-radius: 50%; animation: sp .8s linear infinite; vertical-align: -3px; margin-right: 8px; }
@@ -1129,7 +1129,7 @@ function initHistory() {
     if (isApp && st && st.root) {
       // 다른 화면이면 먼저 홈으로, 홈이면 '한 번 더 누르면 종료' (2초 안에 또 누르면 바닥 아래로 나가며 앱 종료)
       if (S.view !== 'home') { if (!(await guardLeave())) { navPush(); return; } S.view = 'home'; S.selDay = null; render(); enterFx(); window.scrollTo(0, 0); navPush(); return; }
-      toast('뒤로 버튼을 한 번 더 누르면 종료돼요'); haptic(8);
+      toast('한 번 더 누르면 종료됩니다'); haptic(8);
       clearTimeout(exitT); exitT = setTimeout(() => navPush(), 2000);
       return;
     }
@@ -2956,6 +2956,13 @@ window.budgetChartsReady = () => {
   const pending = pendingCharts; pendingCharts = [];
   pending.forEach(([id, cfg]) => mkChart(id, cfg));
 };
+// 그래프 말풍선: 그래프 바깥을 누르면 바로 닫음 (휴대폰에서는 손을 떼도 남아 있어서)
+document.addEventListener('pointerdown', e => {
+  if (e.target.closest && e.target.closest('canvas')) return;
+  S.charts.forEach(ch => {
+    try { if (ch.tooltip && ch.tooltip.getActiveElements().length) { ch.setActiveElements([]); ch.tooltip.setActiveElements([], { x: 0, y: 0 }); ch.update('none'); } } catch (err) {}
+  });
+}, true);
 function mkChart(id, cfg) {
   const el = document.getElementById(id);
   if (!el) return null;
