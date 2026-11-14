@@ -873,7 +873,7 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
     <a data-view="home"><i>◐</i>홈</a>
     <a data-view="tx"><i>≣</i>내역</a>
     <button class="add" id="mAdd" aria-label="거래 추가">＋</button>
-    <a data-view="asset"><i>△</i>자산</a>
+    <a data-view="housing"><i>⌂</i>청약</a>
     <a data-view="more"><i>⋯</i>더보기</a>
   </nav>
 
@@ -2984,7 +2984,7 @@ function render() {
   $('#assetPrivacyToggle').style.display = S.view === 'housing' ? 'none' : '';
   $('.ym').style.visibility = ['set', 'more', 'review', 'housing'].includes(S.view) ? 'hidden' : '';
   $$('#nav a, #tabbar a').forEach(a => a.classList.toggle('on', a.dataset.view === S.view ||
-    (a.dataset.view === 'more' && ['fixed', 'goal', 'year', 'set', 'more', 'review', 'close', 'housing'].includes(S.view))));
+    (a.dataset.view === 'more' && ['fixed', 'goal', 'year', 'set', 'more', 'review', 'close', 'asset'].includes(S.view) && !$(`#tabbar a[data-view="${S.view}"]`))));
   const rvN = $('#navReviewN'); if (rvN) { const q = reviewQueue(), n = q.unc.length + q.sug.length + q.dup.length; rvN.textContent = n || ''; }
   $('#view').onchange = null; $('#view').onclick = null;
   document.body.classList.toggle('v-home', S.view === 'home');
@@ -4209,7 +4209,7 @@ function applyTheme(v) {
 
 /* 모바일 더보기 */
 function vMore() {
-  return `<div class="card">${[['housing', '청약·주거', 'SH·LH·청약홈 공고와 마감 알림'], ['close', '월 마감 점검', '이번 달 마감 전에 확인할 것'], ['review', '분류 검토함', '미분류·자동 제안·중복 의심 정리'], ['fixed', '고정지출', '구독·월세·보험 관리'], ['goal', '예산·저축 목표', '이번 달 예산과 저축 계획'], ['year', '연간 결산', '1년 한눈에 보기'], ['set', '설정', '분류·목표·테마']].map(([v, t, s]) =>
+  return `<div class="card">${[['asset', '자산', '순자산·항목별 잔액·미국주식'], ['housing', '청약·주거', 'SH·LH·청약홈 공고와 마감 알림'], ['close', '월 마감 점검', '이번 달 마감 전에 확인할 것'], ['review', '분류 검토함', '미분류·자동 제안·중복 의심 정리'], ['fixed', '고정지출', '구독·월세·보험 관리'], ['goal', '예산·저축 목표', '이번 달 예산과 저축 계획'], ['year', '연간 결산', '1년 한눈에 보기'], ['set', '설정', '분류·목표·테마']].map(([v, t, s]) =>
     `<div class="li click" onclick="go('${v}')"><div class="main"><b>${t}</b><small>${s}</small></div><span class="muted">›</span></div>`).join('')}</div>`;
 }
 
