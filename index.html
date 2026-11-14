@@ -752,6 +752,7 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 }
 @media print { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
+.nowrap { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* ── 홈 페이스 비교 (PC·휴대폰 공통): 쓴 돈 막대 + 오늘 페이스 위치(파란 선) ── */
 .pace { margin-top: 8px; display: grid; gap: 7px; }
 .pace-bar { position: relative; height: 8px; border-radius: 999px; background: var(--surface-3); }
@@ -1113,8 +1114,12 @@ function initHistory() {
   const h = navH(); if (!h) return;
   navPush(true);
   h.setChangeHandler(async e => {
+    if (S.skipPop) { S.skipPop = false; return; }   // 창을 버튼으로 닫으며 남긴 기록을 되돌린 것
     const st = e && e.state;
-    if (!$('#modal').hidden) { closeModal(); navPush(); return; }   // 팝업이 열려 있으면 팝업만 닫음
+    if (!$('#modal').hidden) {   // 팝업이 열려 있으면 팝업만 닫음
+      if (S.modalHist) { closeModal(true); return; }   // 앱: 창 열 때 남긴 기록이 빠진 것
+      closeModal(); navPush(); return;
+    }
     if (!st || !st.v) return;
     if (!(await guardLeave())) { navPush(); return; }
     S.view = st.v; S.y = st.y || S.y; S.m = st.m || S.m; S.selDay = null;
@@ -2619,6 +2624,11 @@ function api(fn, ...args) {
   });
 }
 async function call(fn, ...args) {
+  // 앱을 막 연 직후(이전 화면 표시 중)면 최신 내역 확인이 끝날 때까지 잠깐 기다렸다 저장
+  if (S.snapshotOnly && S.loading && S.loadWait) {
+    const wait = busy('최신 내역 확인 중…');
+    try { await S.loadWait; } finally { wait(); }
+  }
   if (S.snapshotOnly || !S.data) { toast('최신 내역을 확인한 후 저장할 수 있어요.'); throw new Error('동기화가 필요합니다'); }
   if (fn==='saveStockPortfolio') S.stockRevision=(S.stockRevision||0)+1;
   clearSnapshot();
@@ -2867,10 +2877,14 @@ function openModal(title, html, wide) {
   $('#modalTitle').textContent = title; $('#modalBody').innerHTML = html;
   $('.sheet').classList.toggle('wide', !!wide); md.hidden = false;
   initMoneyIn($('#modalBody'));
+  // 휴대폰 앱: 창을 열 때 기록을 하나 남겨, 뒤로가기가 앱 종료 대신 창 닫기가 되게
+  if (window.__appApi && !S.modalHist) { try { history.pushState({ modal: 1 }, ''); S.modalHist = true; } catch (e) {} }
 }
 // 닫힘 효과(0.14초) 뒤 숨김. 그 사이 다시 열리면 openModal 이 취소함
-function closeModal() {
+// fromBack = 뒤로가기로 닫는 중 (기록은 이미 한 칸 돌아갔음)
+function closeModal(fromBack) {
   const md = $('#modal'); if (md.hidden || md.classList.contains('out')) return;
+  if (S.modalHist) { S.modalHist = false; if (fromBack !== true) { S.skipPop = true; history.back(); } }
   md.classList.add('out');
   md._closeT = setTimeout(() => { md.hidden = true; md.classList.remove('out'); $('#modalBody').innerHTML = ''; }, 150);
 }
@@ -3072,7 +3086,7 @@ function vHome() {
       <div>
         <div class="eyebrow" data-tip="이번 달 변동 예산 − 지금까지 쓴 돈&#10;예산은 예산·저축 목표 화면에서 정해요.">${h.isPast ? '예산 대비 결과' : '남은 예산'}<i class="tip-i">i</i></div>
         <div class="big" style="${h.left < 0 && c.budget ? 'color:var(--bad-ink)' : ''}">${c.budget ? `${h.left < 0 ? '−' : ''}${w(Math.abs(h.left))}<span class="unit">원</span>` : '<span class="muted">-</span>'}</div>
-        <div class="small sub">${c.budget ? `예산 ${won(c.budget)} 중 ${pct(c.variable, c.budget)} 사용${h.left < 0 ? ' · 초과' : ''}` : '<a href="#" onclick="go(\'goal\');return false">예산 정하기 ›</a>'}</div>
+        <div class="small sub nowrap">${c.budget ? `예산 ${won(c.budget)} 중 ${pct(c.variable, c.budget)}${h.left < 0 ? ' · 초과' : ''}` : '<a href="#" onclick="go(\'goal\');return false">예산 정하기 ›</a>'}</div>
       </div>
       <div class="safe">
         ${h.isPast ? `<div class="eyebrow">하루 평균 지출</div><div class="big">${yen(pastAvg)}</div><div class="small sub">${c.budget ? (h.left < 0 ? '예산보다 더 썼어요' : '예산보다 아꼈어요') : '지난 달 기록'}</div>`
@@ -4241,7 +4255,8 @@ function readSnapshot() {
 function applySnapshotState() {
   // 이전 화면을 보는 동안 잠금. 홈은 보기·탭 넘기기만 가능 (저장은 call() 이 최신 확인 전까지 막음)
   $('#view').inert=!!S.snapshotOnly && S.view!=='home';
-  $('#sideAdd').disabled=$('#mAdd').disabled=!!S.snapshotOnly || !S.data;
+  // 입력 창은 이전 화면에서도 바로 열림 (저장은 call() 이 최신 확인 뒤에 함)
+  $('#sideAdd').disabled=$('#mAdd').disabled=!S.data;
 }
 function showSnapshot() {
   const snapshot=readSnapshot();
@@ -4253,7 +4268,7 @@ function showSnapshot() {
 }
 async function load() {
   if (S.loading) return;
-  S.loading=true; S.snapshotOnly=!!S.data; applySnapshotState();
+  S.loading=true; S.loadWait=new Promise(r=>(S.loadDone=r)); S.snapshotOnly=!!S.data; applySnapshotState();
   setSync(S.data?'이전 화면 · 최신 내역 확인 중':'최신 내역 연결 중…');
   try {
     const fresh=await api('getData', false);
@@ -4277,7 +4292,7 @@ async function load() {
       $('#retryLoad').onclick=load;
       setSync('연결 실패');
     }
-  } finally { S.loading=false; }
+  } finally { S.loading=false; if (S.loadDone) S.loadDone(); }
 }
 async function refreshStartupStocks() {
   const revision=S.stockRevision||0;
@@ -4310,8 +4325,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#prevM').onclick = () => shiftMonth(-1);
   $('#nextM').onclick = () => shiftMonth(1);
   $('#thisM').onclick = async () => { if (!(await guardLeave())) return; S.dirty = null; S.y = +S.today.slice(0, 4); S.m = +S.today.slice(5, 7); S.selDay = null; render(); };
-  $('#sideAdd').onclick = () => { if (S.data && !S.snapshotOnly) openTxForm(); };
-  $('#mAdd').onclick = () => { if (S.data && !S.snapshotOnly) openTxForm(); };
+  $('#sideAdd').onclick = () => { if (S.data) openTxForm(); };
+  $('#mAdd').onclick = () => { if (S.data) openTxForm(); };
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.target.closest('[data-close]')) closeModal(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModal();
