@@ -773,7 +773,7 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 .m-month .m-month-l { min-width: 0; padding: 0 2px; font-size: 13.5px; font-weight: 800; color: var(--ink); }
 .m-eye { width: 40px; height: 40px; border-radius: 14px; border: 0; background: var(--surface); box-shadow: 0 0 0 1px var(--line); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
 .m-eye[aria-pressed="true"] { background: var(--ink); color: var(--page); }
-.htabs { display: flex; gap: 4px; margin: 12px -4px 0; overflow-x: auto; scrollbar-width: none; }
+.htabs { display: flex; gap: 4px; margin: 12px 0 0; overflow-x: auto; scrollbar-width: none; }
 .htabs::-webkit-scrollbar { display: none; }
 .htabs button { flex: none; height: 36px; padding: 0 13px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer; transition: background .2s, color .2s; }
 .htabs button.on { background: var(--ink); color: var(--page); font-weight: 700; }
@@ -785,13 +785,13 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
   body.v-home main { padding-top: 12px; }
   .m-home { margin: 0 0 10px; }
   /* 탭 넘기기: 탭 아래 내용이 손가락을 따라 움직이고, 놓으면 부드럽게 제자리/다음 탭으로 */
-  .home { overflow-x: clip; }
+  body.v-home main { overflow-x: clip; }   /* 넘기는 동안 화면 밖으로 나간 부분만 가림 (탭·버튼 테두리는 안 잘림) */
   .home > :not(.m-home) { transform: translateX(var(--hx, 0px)); transition: transform .34s cubic-bezier(.2,.8,.2,1), opacity .3s ease; }
   .home.dragging > :not(.m-home) { transition: none; }
   .home.h-pre > :not(.m-home) { transition: none; opacity: 0; }
   /* 요약 탭은 스크롤 없이 한 화면에: 카드 여백을 줄이고 그래프 높이를 화면 높이에 맞춤 */
   .home[data-tab="sum"] .hero { padding: 16px 16px 8px; }
-  .home[data-tab="sum"] .hero .chart.burn { height: clamp(120px, calc(100dvh - 640px), 240px); margin-top: 10px; }
+  .home[data-tab="sum"] .hero .chart.burn { height: clamp(120px, calc(100dvh - 600px), 260px); margin-top: 10px; }
   .home .hero-kpis > div:not(:first-child) .sub, .home .hero-kpis > div:not(:first-child) .small { font-size: 11.5px; }
   .home .hero-kpis > div:not(:first-child) { gap: 3px; }
   /* 고른 탭의 섹션만 보이기 */
@@ -1390,7 +1390,8 @@ function initTables(root) {
 }
 
 /* ── 그래프가 처음 보일 때 왼쪽부터 천천히 그려짐 ── */
-function revealChart(canvas) { if (canvas && !reducedMotion()) restartCls(canvas.parentElement, 'ws-reveal', 1300); }
+// 저장해 둔 화면을 최신 데이터로 바꿔 그릴 때는 그래프 등장 효과를 다시 돌리지 않음 (옆으로 쓸리는 듯 보임)
+function revealChart(canvas) { if (canvas && !reducedMotion() && !(S.quietUntil > Date.now())) restartCls(canvas.parentElement, 'ws-reveal', 1300); }
 
 document.addEventListener('DOMContentLoaded', () => {
   initAutoFx(); initTips(); initFolds(); initGestures(); initShortcuts();
@@ -4238,7 +4239,8 @@ function readSnapshot() {
   } catch(e) { return null; }
 }
 function applySnapshotState() {
-  $('#view').inert=!!S.snapshotOnly;
+  // 이전 화면을 보는 동안 잠금. 홈은 보기·탭 넘기기만 가능 (저장은 call() 이 최신 확인 전까지 막음)
+  $('#view').inert=!!S.snapshotOnly && S.view!=='home';
   $('#sideAdd').disabled=$('#mAdd').disabled=!!S.snapshotOnly || !S.data;
 }
 function showSnapshot() {
@@ -4256,6 +4258,7 @@ async function load() {
   try {
     const fresh=await api('getData', false);
     if (!fresh.stocks && S.data && S.data.stocks) fresh.stocks=S.data.stocks;
+    if (S.snapshotOnly) S.quietUntil=Date.now()+3000;   // 이전 화면을 최신으로 바꾸는 중: 등장 효과 생략
     S.data=fresh; S.snapshotOnly=false;
     S.today=S.data.today;
     if (!S.y) { S.y=+S.today.slice(0,4); S.m=+S.today.slice(5,7); }
