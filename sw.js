@@ -1,5 +1,5 @@
 /* 오프라인용 파일 — 앱 화면(이 폴더의 파일)과 글꼴·차트 라이브러리만 기기에 저장. 가계부 데이터 요청(POST)은 건드리지 않음 */
-const VERSION = '1a4181eff5';
+const VERSION = 'bc99cef0b9';
 const SHELL = 'budget-shell-' + VERSION, CDN = 'budget-cdn-v1';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png'];
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
@@ -18,7 +18,8 @@ self.addEventListener('fetch', e => {
   if (url.origin === location.origin) {
     // 화면: 인터넷이 되면 새 버전, 안 되면 저장해 둔 화면
     if (req.mode === 'navigate') {
-      e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(SHELL).then(s => s.put('./index.html', c)); return r; })
+      // no-store: GitHub Pages 캐시(10분)를 건너뛰고 늘 최신 화면을 받음
+      e.respondWith(fetch(req, { cache: 'no-store' }).then(r => { const c = r.clone(); caches.open(SHELL).then(s => s.put('./index.html', c)); return r; })
         .catch(() => caches.match('./index.html', { ignoreSearch: true })));
       return;
     }

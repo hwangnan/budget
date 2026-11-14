@@ -1001,7 +1001,14 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 
   /* 오프라인용 파일(sw.js) — 앱 화면을 기기에 저장해 두고 빠르게 열기 */
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) { reg.update(); }).catch(function () {});
+    });
+    // 새 버전 오프라인 파일이 자리 잡으면 한 번만 새로 고쳐 최신 화면으로 (첫 설치 때는 제외)
+    var hadCtl = !!navigator.serviceWorker.controller, reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadCtl || reloaded) return; reloaded = true; location.reload();
+    });
   }
 })();
 
