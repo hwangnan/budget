@@ -30,6 +30,9 @@
 .ac-tip ol { margin: 6px 0 0; padding-left: 20px; }
 .app-connect textarea { width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; margin-bottom: 12px; resize: vertical; }
 .ac-foot { margin: 14px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+/* 앱답게: 글자를 꾹 눌러도 선택·검색 메뉴가 뜨지 않게 (입력 칸은 그대로 선택·붙여넣기 가능) */
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+input, textarea, select, [contenteditable] { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 /* 앱에서는 PC 전용 안내(단축키)를 숨김 */
 .kbd-hint { display: none !important; }
 
@@ -1112,7 +1115,10 @@ function navPush(replace) {
 }
 function initHistory() {
   const h = navH(); if (!h) return;
-  navPush(true);
+  // 휴대폰 앱: 맨 처음 기록을 '바닥'으로 두고 그 위에 화면 기록을 쌓음 → 바닥에 닿으면 바로 종료하지 않고 한 번 더 확인
+  const isApp = !!window.__appApi;
+  if (isApp) { h.replace({ root: 1 }, {}, ''); navPush(); } else navPush(true);
+  let exitT = 0;
   h.setChangeHandler(async e => {
     if (S.skipPop) { S.skipPop = false; return; }   // 창을 버튼으로 닫으며 남긴 기록을 되돌린 것
     const st = e && e.state;
@@ -1120,6 +1126,14 @@ function initHistory() {
       if (S.modalHist) { closeModal(true); return; }   // 앱: 창 열 때 남긴 기록이 빠진 것
       closeModal(); navPush(); return;
     }
+    if (isApp && st && st.root) {
+      // 다른 화면이면 먼저 홈으로, 홈이면 '한 번 더 누르면 종료' (2초 안에 또 누르면 바닥 아래로 나가며 앱 종료)
+      if (S.view !== 'home') { if (!(await guardLeave())) { navPush(); return; } S.view = 'home'; S.selDay = null; render(); enterFx(); window.scrollTo(0, 0); navPush(); return; }
+      toast('뒤로 버튼을 한 번 더 누르면 종료돼요'); haptic(8);
+      clearTimeout(exitT); exitT = setTimeout(() => navPush(), 2000);
+      return;
+    }
+    clearTimeout(exitT);
     if (!st || !st.v) return;
     if (!(await guardLeave())) { navPush(); return; }
     S.view = st.v; S.y = st.y || S.y; S.m = st.m || S.m; S.selDay = null;
