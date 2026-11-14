@@ -762,18 +762,18 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 .pace-ok { color: var(--good-ink); } .pace-over { color: var(--bad-ink); }
 
 /* ── 휴대폰 홈: 인사말 + 섹션 탭 (PC 는 .show-m 로 숨김) ── */
-.m-hello { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.m-hello-t { display: grid; gap: 3px; min-width: 0; word-break: keep-all; }
+.m-hello { display: grid; gap: 2px; min-width: 0; word-break: keep-all; }
+.m-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .m-date { font-size: 13px; color: var(--muted); font-weight: 600; }
-.m-hello-t b { font-size: 22px; font-weight: 800; letter-spacing: -.03em; line-height: 1.3; }
-.m-line { font-size: 13.5px; color: var(--ink-2); }
-.m-hello-a { display: flex; gap: 6px; flex: none; padding-top: 2px; }
-.m-month { display: flex; align-items: center; height: 44px; border-radius: 15px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
-.m-month button { height: 44px; min-width: 30px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 16px; cursor: pointer; }
+.m-greet { font-size: 22px; font-weight: 800; letter-spacing: -.03em; line-height: 1.3; }
+.m-line { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-hello-a { display: flex; gap: 6px; flex: none; }
+.m-month { display: flex; align-items: center; height: 40px; border-radius: 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.m-month button { height: 40px; min-width: 30px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 16px; cursor: pointer; }
 .m-month .m-month-l { min-width: 0; padding: 0 2px; font-size: 13.5px; font-weight: 800; color: var(--ink); }
-.m-eye { width: 44px; height: 44px; border-radius: 15px; border: 0; background: var(--surface); box-shadow: 0 0 0 1px var(--line); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.m-eye { width: 40px; height: 40px; border-radius: 14px; border: 0; background: var(--surface); box-shadow: 0 0 0 1px var(--line); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
 .m-eye[aria-pressed="true"] { background: var(--ink); color: var(--page); }
-.htabs { display: flex; gap: 4px; margin: 14px -4px 4px; overflow-x: auto; scrollbar-width: none; }
+.htabs { display: flex; gap: 4px; margin: 12px -4px 0; overflow-x: auto; scrollbar-width: none; }
 .htabs::-webkit-scrollbar { display: none; }
 .htabs button { flex: none; height: 36px; padding: 0 13px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer; transition: background .2s, color .2s; }
 .htabs button.on { background: var(--ink); color: var(--page); font-weight: 700; }
@@ -782,7 +782,18 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 @media (max-width: 820px) {
   /* 홈은 앱 머리(인사·달·자산 숨기기)가 상단바를 대신함 */
   body.v-home .top { display: none; }
-  .m-home { margin: 0 0 12px; }
+  body.v-home main { padding-top: 12px; }
+  .m-home { margin: 0 0 10px; }
+  /* 탭 넘기기: 탭 아래 내용이 손가락을 따라 움직이고, 놓으면 부드럽게 제자리/다음 탭으로 */
+  .home { overflow-x: clip; }
+  .home > :not(.m-home) { transform: translateX(var(--hx, 0px)); transition: transform .34s cubic-bezier(.2,.8,.2,1), opacity .3s ease; }
+  .home.dragging > :not(.m-home) { transition: none; }
+  .home.h-pre > :not(.m-home) { transition: none; opacity: 0; }
+  /* 요약 탭은 스크롤 없이 한 화면에: 카드 여백을 줄이고 그래프 높이를 화면 높이에 맞춤 */
+  .home[data-tab="sum"] .hero { padding: 16px 16px 8px; }
+  .home[data-tab="sum"] .hero .chart.burn { height: clamp(120px, calc(100dvh - 640px), 240px); margin-top: 10px; }
+  .home .hero-kpis > div:not(:first-child) .sub, .home .hero-kpis > div:not(:first-child) .small { font-size: 11.5px; }
+  .home .hero-kpis > div:not(:first-child) { gap: 3px; }
   /* 고른 탭의 섹션만 보이기 */
   .home[data-tab="sum"] [data-htab]:not([data-htab="sum"]),
   .home[data-tab="use"] [data-htab]:not([data-htab="use"]),
@@ -801,7 +812,7 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
   .home .hero-kpis > div:not(:first-child) { padding: 12px 14px; border: 0; border-radius: 16px; background: var(--surface-2); grid-column: auto; }
   .home .hero-kpis > .safe { background: var(--accent-soft); }
   .home .hero-kpis > div:not(:first-child) .big { font-size: 19px; }
-  .home .hero-kpis > div:first-child .big { font-size: 34px; }
+  .home .hero-kpis > div:first-child .big { font-size: 32px; }
   /* 강조 카드(이번 달 한눈에 · 자산 요약): 차콜 회색 — 색 변수만 바꿔 안쪽 글자·선이 같이 맞춰짐 */
   .accent-card { --surface: #3a3936; --surface-2: #47463f; --surface-3: #55544f; --ink: #f4f3ef; --ink-2: #dddcd4; --muted: #b9b8b0; --line: rgba(255,255,255,.12); --axis: #77766f;
     background: var(--surface); color: var(--ink); border-color: transparent; }
@@ -1255,19 +1266,32 @@ const haptic = ms => { try { if (navigator.vibrate && matchMedia('(hover: none)'
 function initGestures() {
   let sx = 0, sy = 0, st = 0, ok = false;
   const NO = 'input,textarea,select,canvas,.tbl-wrap,.chips,.seg,.cal,.modal,[data-noswipe]';
+  // 휴대폰 홈: 가로로 끌면 화면이 손가락을 따라오고, 놓으면 다음/이전 섹션 탭으로 넘어감
+  let hdrag = null;   // null = 아직 방향 모름, true = 가로 끌기, false = 세로 스크롤
+  const homeBox = () => typeof homeSwipeBox === 'function' && homeSwipeBox();
   document.addEventListener('touchstart', e => {
     const t = e.touches[0]; ok = e.touches.length === 1 && !!e.target.closest('#view') && !e.target.closest(NO);
-    sx = t.clientX; sy = t.clientY; st = Date.now();
+    sx = t.clientX; sy = t.clientY; st = Date.now(); hdrag = null;
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!ok || hdrag === false || !homeBox() || !$('#modal').hidden) return;
+    const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (hdrag === null) { if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; hdrag = Math.abs(dx) > Math.abs(dy) * 1.3; if (!hdrag) return; }
+    homeTabDrag(dx);
   }, { passive: true });
   document.addEventListener('touchend', e => {
     if (!ok || ['set', 'more'].includes(S.view) || !$('#modal').hidden) return;
-    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
-    if (Math.abs(dx) > 70 && Math.abs(dy) < 45 && Date.now() - st < 650) {
-      haptic(8);
-      // 휴대폰 홈은 섹션 탭을 넘기고, 다른 화면은 달을 넘김
-      if (!(typeof homeTabStep === 'function' && homeTabStep(dx < 0 ? 1 : -1))) shiftMonth(dx < 0 ? 1 : -1);
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy, ms = Date.now() - st;
+    if (homeBox()) {
+      if (!hdrag) return;
+      // 화면 폭의 1/4 넘게 끌었거나 빠르게 튕겼으면 넘김
+      const go = Math.abs(dx) > innerWidth * 0.25 || (Math.abs(dx) > 40 && Math.abs(dx) / Math.max(1, ms) > 0.5);
+      homeTabStep(go ? (dx < 0 ? 1 : -1) : 0);
+      return;
     }
+    if (Math.abs(dx) > 70 && Math.abs(dy) < 45 && ms < 650) { haptic(8); shiftMonth(dx < 0 ? 1 : -1); }
   }, { passive: true });
+  document.addEventListener('touchcancel', () => { if (hdrag && homeBox()) homeTabStep(0); hdrag = null; }, { passive: true });
 
   // 바텀시트 끌어내리기
   const md = $('#modal'), sheet = md.querySelector('.sheet');
@@ -3148,32 +3172,51 @@ function homeHelloHtml(c, h, rqN, htab) {
   const eye = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
   return `<div class="m-home show-m">
     <div class="m-hello">
-      <div class="m-hello-t"><span class="m-date">${tm}월 ${td}일 ${DOW[new Date(ty, tm - 1, td).getDay()]}요일</span>
-        <b>${esc(homeGreeting(new Date().getHours(), setting('부를이름')))}</b><span class="m-line">${homeLine(c, h)}</span></div>
+      <div class="m-top"><span class="m-date">${tm}월 ${td}일 ${DOW[new Date(ty, tm - 1, td).getDay()]}요일</span>
       <div class="m-hello-a">
         <div class="m-month"><button type="button" data-mm="-1" aria-label="이전 달">‹</button><button type="button" data-mm="0" class="m-month-l" title="이번 달로">${c.y === ty ? '' : c.y + '년 '}${c.m}월</button><button type="button" data-mm="1" aria-label="다음 달">›</button></div>
         <button type="button" class="m-eye" data-meye aria-label="자산 숨기기" aria-pressed="${S.assetsHidden ? 'true' : 'false'}">${eye}</button>
-      </div>
+      </div></div>
+      <b class="m-greet">${esc(homeGreeting(new Date().getHours(), setting('부를이름')))}</b><span class="m-line">${homeLine(c, h)}</span>
     </div>
     <div class="htabs" role="tablist" aria-label="홈 섹션">${HOME_TABS.map(([k, l]) =>
       `<button type="button" role="tab" data-htab-btn="${k}" aria-selected="${k === htab}" class="${k === htab ? 'on' : ''}">${l}${k === 'chk' && rqN ? `<span class="htab-n">${rqN}</span>` : ''}</button>`).join('')}</div>
   </div>`;
 }
-function setHomeTab(k) {
-  const box = $('#view .home'); if (!box || !HOME_TABS.some(t => t[0] === k)) return;
+const homeTabIdx = k => HOME_TABS.findIndex(t => t[0] === k);
+// 새 탭 내용이 넘긴 방향 쪽에서 미끄러져 들어옴 (dir: 1 = 다음 탭, -1 = 이전 탭)
+function setHomeTab(k, dir) {
+  const box = $('#view .home'); if (!box || homeTabIdx(k) < 0) return;
+  const from = homeTabIdx(box.dataset.tab);
+  if (dir == null) dir = Math.sign(homeTabIdx(k) - from);
   S.htab = k; try { localStorage.setItem('homeTab', k); } catch (e) {}
+  box.classList.remove('dragging'); box.classList.add('h-pre');
+  box.style.setProperty('--hx', (reducedMotion() ? 0 : dir * Math.round(innerWidth * 0.32)) + 'px');
   box.dataset.tab = k;
   $$('[data-htab-btn]', box).forEach(b => { const on = b.dataset.htabBtn === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+  const on = $(`[data-htab-btn="${k}"]`, box); if (on && on.scrollIntoView) on.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   window.scrollTo(0, 0);
-  restartCls(box, 'ws-enter', 400);
+  void box.offsetWidth;   // 시작 위치를 적용한 뒤 제자리로 미끄러지게
+  box.classList.remove('h-pre'); box.style.setProperty('--hx', '0px');
   S.charts.forEach(ch => { try { ch.resize(); } catch (e) {} });
 }
-// 휴대폰 홈에서 옆으로 밀면 섹션 탭을 넘김 (넘겼으면 true)
+// 휴대폰 홈이면 손가락 끌기를 탭 넘기기에 씀
+function homeSwipeBox() {
+  return S.view === 'home' && matchMedia('(max-width: 820px)').matches ? $('#view .home') : null;
+}
+// 끌던 거리만큼 화면이 따라옴 (첫·마지막 탭에서 더 밀면 살짝만 끌림)
+function homeTabDrag(dx) {
+  const box = homeSwipeBox(); if (!box) return;
+  const i = homeTabIdx(box.dataset.tab), edge = (dx > 0 && i <= 0) || (dx < 0 && i >= HOME_TABS.length - 1);
+  box.classList.add('dragging'); box.style.setProperty('--hx', Math.round(dx * (edge ? 0.25 : 0.9)) + 'px');
+}
+// 손을 뗐을 때: 충분히 밀었으면 넘기고, 아니면 제자리 (넘겼거나 홈 탭을 다뤘으면 true)
 function homeTabStep(dir) {
-  if (S.view !== 'home' || !matchMedia('(max-width: 820px)').matches || !$('#view .home')) return false;
-  const i = HOME_TABS.findIndex(t => t[0] === (S.htab || 'sum')), j = i + dir;
-  if (j < 0 || j >= HOME_TABS.length) return true;
-  setHomeTab(HOME_TABS[j][0]); return true;
+  const box = homeSwipeBox(); if (!box) return false;
+  const j = homeTabIdx(box.dataset.tab) + dir;
+  if (dir && j >= 0 && j < HOME_TABS.length) { haptic(8); setHomeTab(HOME_TABS[j][0], dir); }
+  else { box.classList.remove('dragging'); box.style.setProperty('--hx', '0px'); }
+  return true;
 }
 /* 목표 없는 분류: 달성률처럼 보이지 않게, 3개월 평균 자리에 눈금만 둔 회색 막대 */
 function avgBar(cur, avg) {

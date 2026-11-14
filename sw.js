@@ -1,5 +1,5 @@
 /* 오프라인용 파일 — 앱 화면(이 폴더의 파일)과 글꼴·차트 라이브러리만 기기에 저장. 가계부 데이터 요청(POST)은 건드리지 않음 */
-const VERSION = 'b9343cc58e';
+const VERSION = '9dc812c490';
 const SHELL = 'budget-shell-' + VERSION, CDN = 'budget-cdn-v1';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png'];
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
