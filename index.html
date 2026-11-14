@@ -1117,7 +1117,25 @@ function initHistory() {
   const h = navH(); if (!h) return;
   // 휴대폰 앱: 맨 처음 기록을 '바닥'으로 두고 그 위에 화면 기록을 쌓음 → 바닥에 닿으면 바로 종료하지 않고 한 번 더 확인
   const isApp = !!window.__appApi;
-  if (isApp) { h.replace({ root: 1 }, {}, ''); navPush(); } else navPush(true);
+  // 크롬의 '닫기 감시(CloseWatcher)': 안드로이드 뒤로가기를 앱이 먼저 받음. 화면을 한 번도 안 눌렀어도 동작
+  // (기록을 쌓는 방식은 터치 전에는 크롬이 건너뛰어 바로 종료됨)
+  const useCW = isApp && typeof window.CloseWatcher === 'function';
+  if (useCW) {
+    h.replace({ root: 1, v: S.view, y: S.y, m: S.m }, {}, '');
+    let cw = null;
+    const arm = () => { try { cw = new CloseWatcher(); cw.onclose = onBack; } catch (e) { cw = null; } };
+    const onBack = () => {
+      cw = null;
+      const st = history.state || {};
+      // 창이 열려 있거나 이전 화면이 있으면 평소 뒤로가기 (창 닫기·이전 화면)
+      if (!st.root || !$('#modal').hidden) { history.back(); arm(); return; }
+      if (S.view !== 'home') { S.view = 'home'; S.selDay = null; render(); enterFx(); window.scrollTo(0, 0); h.replace({ root: 1, v: 'home', y: S.y, m: S.m }, {}, ''); arm(); return; }
+      // 홈 바닥: 안내만 띄우고 2초 동안 감시를 꺼 둠 → 그 사이 또 누르면 앱 종료
+      toast('한 번 더 누르면 종료됩니다'); haptic(8);
+      setTimeout(arm, 2000);
+    };
+    arm();
+  } else if (isApp) { h.replace({ root: 1 }, {}, ''); navPush(); } else navPush(true);
   let exitT = 0;
   h.setChangeHandler(async e => {
     if (S.skipPop) { S.skipPop = false; return; }   // 창을 버튼으로 닫으며 남긴 기록을 되돌린 것
@@ -1126,7 +1144,7 @@ function initHistory() {
       if (S.modalHist) { closeModal(true); return; }   // 앱: 창 열 때 남긴 기록이 빠진 것
       closeModal(); navPush(); return;
     }
-    if (isApp && st && st.root) {
+    if (isApp && !useCW && st && st.root) {
       // 다른 화면이면 먼저 홈으로, 홈이면 '한 번 더 누르면 종료' (2초 안에 또 누르면 바닥 아래로 나가며 앱 종료)
       if (S.view !== 'home') { if (!(await guardLeave())) { navPush(); return; } S.view = 'home'; S.selDay = null; render(); enterFx(); window.scrollTo(0, 0); navPush(); return; }
       toast('한 번 더 누르면 종료됩니다'); haptic(8);
