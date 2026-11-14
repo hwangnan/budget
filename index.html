@@ -2605,7 +2605,7 @@ vHousing.after = () => {
 const S = { data: null, y: 0, m: 0, today: '', view: 'home', charts: [], selDay: null, memo: {}, assetsHidden: readAssetPrivacy(),
   txf: { q: '', type: '', cat: '', pay: '', all: false }, fixAll: false, extraAssets: [], refDraft: null, last: {},
   homeFold: (() => { try { return !!localStorage.getItem('homeFold'); } catch (e) { return false; } })(),
-  htab: (() => { try { return localStorage.getItem('homeTab') || 'sum'; } catch (e) { return 'sum'; } })() };
+  htab: 'sum' };   // 휴대폰 홈 탭: 앱을 켤 때마다 요약부터 (켜 둔 동안만 기억)
 
 function api(fn, ...args) {
   return new Promise((res, rej) => {
@@ -3197,7 +3197,7 @@ function setHomeTab(k, dir) {
   const box = $('#view .home'); if (!box || homeTabIdx(k) < 0) return;
   const from = homeTabIdx(box.dataset.tab);
   if (dir == null) dir = Math.sign(homeTabIdx(k) - from);
-  S.htab = k; try { localStorage.setItem('homeTab', k); } catch (e) {}
+  S.htab = k;
   box.classList.remove('dragging'); box.classList.add('h-pre');
   box.style.setProperty('--hx', (reducedMotion() ? 0 : dir * Math.round(innerWidth * 0.32)) + 'px');
   box.dataset.tab = k;
