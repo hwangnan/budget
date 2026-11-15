@@ -3765,7 +3765,8 @@ function buildTxForm(host, { tx, preset, inline }) {
     } finally { if (btn.isConnected) btn.disabled = false; }
   };
   draw();
-  if (!tx && !inline) setTimeout(() => q('[data-i="amt"]') && q('[data-i="amt"]').focus(), 60);
+  // PC 는 바로 금액 입력. 휴대폰(터치)은 키보드가 화면을 가리지 않게 금액 칸을 눌렀을 때만 키보드
+  if (!tx && !inline && !matchMedia('(hover: none)').matches) setTimeout(() => q('[data-i="amt"]') && q('[data-i="amt"]').focus(), 60);
 }
 
 /* ═════════════ 3. 고정지출 ═════════════ */
